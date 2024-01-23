@@ -1,0 +1,34 @@
+model:
+  arch: minigpt4
+  model_type: pretrain_vicuna0
+  max_txt_len: 160
+  end_sym: "###"
+  low_resource: True
+  prompt_template: '###Human: {} ###Assistant: '
+  ckpt: '/mnt/vepfs/zhangyichi/multimodal-project/models/mini-GPT4/prerained_minigpt4_7b.pth'
+
+  # vit encoder
+  image_size: 224
+  drop_path_rate: 0
+  use_grad_checkpoint: False
+  vit_precision: "fp16"
+  freeze_vit: True
+  freeze_qformer: True
+
+  # Q-Former
+  num_query_token: 32
+
+  # generation configs
+  prompt: ""
+
+  llama_model: "/mnt/vepfs/zhangyichi/Trustworthy-MLLM/playground/model_weights/vicuna-7b-v0"
+
+
+preprocess:
+    vis_processor:
+        eval:
+          name: "blip2_image_eval"
+          image_size: 224
+    text_processor:
+        eval:
+          name: "blip_caption"

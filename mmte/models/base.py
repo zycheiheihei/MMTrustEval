@@ -8,13 +8,14 @@ class BaseChat(ABC):
     Base class for models to be evaluated in a generative/chat manner.
     """
     
-    model_id = ''   # ID for a chat model, e.g., minigpt-4-vicuna-7b-v0
-    model_family = '' # Family of the model, e.g., minigpt-4
-    model_type = '' # Type to load specific configuration for a certain type of model, e.g., vicuna-7b-v0
+    model_id: str = ''   # ID for a chat model, e.g., minigpt-4-vicuna-7b-v0
+    model_arch: str = '' # Architecture of the model, e.g., minigpt-4
+    model_family: List[str] = [] # List of available model_ids
     
     
-    def __init__(self, **kargs) -> None:
-        pass
+    def __init__(self, model_id:str) -> None:
+        self.model_id = model_id
+        assert self.model_id in self.model_family, f"model_id should be in {self.model_family}"
     
 
     @classmethod

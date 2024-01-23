@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Literal
 import openai
 import yaml
 from mmte.models.base import BaseChat, Response
@@ -9,19 +9,20 @@ import base64
 
 class OpenAIChat(BaseChat):
     """
-    Chat class for OpenAI models, e.g. gpt-4-vision-preview
+    Chat class for OpenAI models, e.g., gpt-4-vision-preview
     """
     
     MODEL_CONFIG = {"gpt-4-vision-preview": 'configs/models/openai/openai.yaml',
                     "gpt-4-1106-preview": 'configs/models/openai/openai.yaml',
                     "gpt-3.5-turbo": 'configs/models/openai/openai.yaml'}
     
-    def __init__(self, model_id='gpt-4v', use_proxy=True, **kargs) -> None:
-        super().__init__(**kargs)
-        self.model_id = model_id
-        self.model_type = self.id_to_type(model_id)
-        self.model_family = 'gpt'
-        config = self.MODEL_CONFIG[self.model_type]
+    model_family = list(MODEL_CONFIG.keys())
+    
+    model_arch = 'gpt'
+    
+    def __init__(self, model_id: str="gpt-4-vision-preview", use_proxy=True, **kargs):
+        super().__init__(model_id=model_id)
+        config = self.MODEL_CONFIG[self.model_id]
         with open(get_abs_path(config)) as f:
             self.model_config = yaml.load(f, Loader=yaml.FullLoader)
         if use_proxy:
@@ -65,39 +66,29 @@ class OpenAIChat(BaseChat):
         
         # Create Completion Request
         raw_request: Dict[str, Any] = {
-            "model": self.model_type,
+            "model": self.model_id,
             "messages": conversation,
         }
         
         # Generation Configuration
         raw_request["temperature"] = generation_kwargs.get("temperature", 1.0)
-        raw_request["max_tokens"] = generation_kwargs.get("max_tokens", 100)
-        raw_request["n"] = generation_kwargs.get("num_completions", 1)
+        raw_request["max_tokens"] = generation_kwargs.get("max_new_tokens", 100)
+        raw_request["n"] = generation_kwargs.get("num_return_sequences", 1)
         if "stop_sequences" in generation_kwargs:
             raw_request["stop"] = generation_kwargs.get("stop_sequences")
         if "do_sample" in generation_kwargs and not generation_kwargs.get("do_sample"):
             raw_request["temperature"] = 0.0
-        if "logprobs" in generation_kwargs and "vision" not in self.model_type:
-            raw_request["logprobs"] = generation_kwargs.get("logprobs", False)
+        if "output_scores" in generation_kwargs and "vision" not in self.model_id:
+            raw_request["logprobs"] = generation_kwargs.get("output_scores", False)
             
         response = self.client.chat.completions.create(**raw_request)
         
-        response_message = response['choices'][0]['message']['content']
-        finish_reason = response['choices'][0]['finish_reason']
-        logprobs = response['choices'][0]['logprobs']
+        response_message = response.choices[0].message.content
+        finish_reason = response.choices[0].finish_reason
+        logprobs = response.choices[0].logprobs
         
         return Response(self.model_id, response_message, logprobs, finish_reason)
 
-    
-    @classmethod
-    def id_to_type(cls, id: str) -> str:
-        if 'v' in id.strip("preview"):
-            return "gpt-4-vision-preview"
-        elif 'gpt-4' in id:
-            return "gpt-4-1106-preview"
-        else:
-            return "gpt-3.5-turbo"
-    
     
     # Function to encode the image
     @classmethod
