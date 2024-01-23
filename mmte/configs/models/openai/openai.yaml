@@ -1,0 +1,4 @@
+api_key: "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"
+proxy: "127.0.0.1:7890"
+max_retries: 10
+timeout: 5
