@@ -17,13 +17,6 @@ class BaseChat(ABC):
         self.model_id = model_id
         assert self.model_id in self.model_family, f"model_id should be in {self.model_family}"
     
-
-    @classmethod
-    def id_to_type(cls, id:str) -> str:
-        """
-        Convert model_id to model_type in order to locate the model config
-        """
-        return ''
     
     @abstractmethod
     def chat(self, 
@@ -42,9 +35,13 @@ class BaseChat(ABC):
                 ...
             ], 
             where content is a dict {'text': str, 'image_path': str} when it's multimodal.
-        generation_kwargs: generation configuration specified for different models, including "temperature", "do_sample", "max_tokens", "stop_sequences", "logprobs", etc.
-            
-            
+        generation_kwargs: generation configuration specified for different models, including:
+            temperature: float, usually between 0-2, smaller means more deterministic
+            do_sample: bool, whether take sampling as the decoding strategy
+            num_beams: int, the parameter for beam search
+            max_new_tokens: int, maximal number of tokens to be generated
+            stop_sequences: str/List[str], stop words where the model will stop generating further tokens
+            output_scores: bool, whether return the logits of the generated tokens (not very practical)
         """
         raise NotImplementedError
     
